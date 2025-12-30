@@ -83,28 +83,26 @@ if not st.session_state.configurado:
 st.title(f"🤖 Asistente: {st.session_state.tema}")
 st.sidebar.markdown(f"**ID de Sesión:** `{st.session_state.session_uuid}`")
 
-# Mostrar historial
+
 for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         
-        # Solo mostramos feedback para los mensajes de la IA que ya fueron guardados en DB
+        # Si el mensaje es de la IA y tiene un ID de base de datos, mostramos los dedos
         if msg["role"] == "assistant" and "db_id" in msg:
-            # La 'key' única es el secreto para que Streamlit mantenga el estado
+            # La 'key' única (fb_ID) permite que Streamlit mantenga el estado del dedo
             f_key = f"fb_{msg['db_id']}"
-            
-            # Mostramos el widget de feedback
-            # Si el usuario hace clic, se ejecuta el código de abajo
             feedback = st.feedback("thumbs", key=f_key)
             
+            # Si el estudiante hace clic o cambia su selección
             if feedback is not None:
-                # Mapeamos la selección
                 val = "up" if feedback == 0 else "down"
-                # Actualizamos Supabase con la última selección
                 try:
+                    # Actualizamos la fila en Supabase con la última selección
                     supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
-                except:
-                    pass
+                except Exception as e:
+                    pass # Silencioso para no interrumpir la experiencia del usuario
+
 
 with st.sidebar:
     st.header("Asistente")
@@ -155,41 +153,11 @@ if prompt:
             )
             ai_res = response.choices[0].message.content
             ai_res = ai_res.replace(r"\(", "$").replace(r"\)", "$").replace(r"\[", "$$").replace(r"\]", "$$")
-
-            log_data = {
-           "session_id": st.session_state.session_uuid,
-           "nrc": st.session_state.nrc,
-           "grupo": st.session_state.grupo,
-           "tema": st.session_state.tema,
-           "estudiante": autor,
-           "mensaje_usuario": prompt,
-          "respuesta_ia": ai_res,
-         "usa_rag": bool(st.session_state.vector_db),
-          "timestamp": datetime.now().isoformat()
-           }
-
-    try:
-        # Insertar y recuperar el ID generado
-        res_db = supabase.table("interacciones_investigacion").insert(log_data).execute()
-        new_id = res_db.data[0]['id']
-        
-        # AGREGAR AL HISTORIAL CON EL ID DE LA BASE DE DATOS
-        st.session_state.messages.append({"role": "assistant", "content": ai_res, "db_id": new_id})
-        st.session_state.log_buffer.append(log_data)
-        
-        # Forzar recarga para que aparezcan los dedos inmediatamente
-        st.rerun()
-
         except Exception as e:
             ai_res = f"Error al generar respuesta: {e}"
             
 
-    # 3. Mostrar respuesta de la IA (el spinner desaparece aquí)
-    st.session_state.messages.append({"role": "assistant", "content": ai_res})
-    with st.chat_message("assistant"):
-        st.markdown(ai_res)
-
-    # 4. REGISTRO EN SUPABASE Y CAPTURA DE ID
+    # 3. Guardar en Base de Datos para obtener el ID
     log_data = {
         "session_id": st.session_state.session_uuid,
         "nrc": st.session_state.nrc,
@@ -203,24 +171,20 @@ if prompt:
     }
     
     try:
-        # Al insertar, guardamos el resultado para obtener el ID de la fila
-        response_db = supabase.table("interacciones_investigacion").insert(log_data).execute()
-        # Extraemos el ID generado por Supabase
-        row_id = response_db.data[0]['id']
+        # Insertamos en Supabase y recuperamos el ID generado automáticamente
+        res_db = supabase.table("interacciones_investigacion").insert(log_data).execute()
+        new_db_id = res_db.data[0]['id']
         
-        # 5. OPCIÓN DE FEEDBACK (DEDOS)
-        # st.feedback es una función reciente de Streamlit (v1.33+)
-        # Si tu versión es antigua, avísame para darte una alternativa con botones.
-        feedback = st.feedback("thumbs")
+        # 4. Agregamos al historial de la sesión el ID de la DB
+        st.session_state.messages.append({"role": "assistant", "content": ai_res, "db_id": new_db_id})
+        st.session_state.log_buffer.append(log_data)
         
-        if feedback is not None:
-            # Mapeamos el índice del feedback a texto
-            val = "up" if feedback == 0 else "down"
-            # Actualizamos la fila recién creada con el feedback
-            supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", row_id).execute()
-            st.toast(f"¡Gracias por tu feedback, {autor}!", icon="✅")
-
+        # 5. RECARGA: Necesaria para que aparezcan los dedos inmediatamente
+        st.rerun()
+        
     except Exception as e:
-        st.sidebar.error(f"Error al registrar feedback: {e}")
+        # En caso de error, guardamos el mensaje sin ID para no bloquear el chat
+        st.session_state.messages.append({"role": "assistant", "content": ai_res})
+        st.sidebar.error(f"Error de registro: {e}")
         
     st.session_state.log_buffer.append(log_data)

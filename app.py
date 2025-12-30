@@ -84,9 +84,27 @@ st.title(f"🤖 Asistente: {st.session_state.tema}")
 st.sidebar.markdown(f"**ID de Sesión:** `{st.session_state.session_uuid}`")
 
 # Mostrar historial
-for msg in st.session_state.messages:
+for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
+        
+        # Solo mostramos feedback para los mensajes de la IA que ya fueron guardados en DB
+        if msg["role"] == "assistant" and "db_id" in msg:
+            # La 'key' única es el secreto para que Streamlit mantenga el estado
+            f_key = f"fb_{msg['db_id']}"
+            
+            # Mostramos el widget de feedback
+            # Si el usuario hace clic, se ejecuta el código de abajo
+            feedback = st.feedback("thumbs", key=f_key)
+            
+            if feedback is not None:
+                # Mapeamos la selección
+                val = "up" if feedback == 0 else "down"
+                # Actualizamos Supabase con la última selección
+                try:
+                    supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
+                except:
+                    pass
 
 with st.sidebar:
     st.header("Asistente")
@@ -137,6 +155,31 @@ if prompt:
             )
             ai_res = response.choices[0].message.content
             ai_res = ai_res.replace(r"\(", "$").replace(r"\)", "$").replace(r"\[", "$$").replace(r"\]", "$$")
+
+            log_data = {
+           "session_id": st.session_state.session_uuid,
+           "nrc": st.session_state.nrc,
+           "grupo": st.session_state.grupo,
+           "tema": st.session_state.tema,
+           "estudiante": autor,
+           "mensaje_usuario": prompt,
+          "respuesta_ia": ai_res,
+         "usa_rag": bool(st.session_state.vector_db),
+          "timestamp": datetime.now().isoformat()
+           }
+
+    try:
+        # Insertar y recuperar el ID generado
+        res_db = supabase.table("interacciones_investigacion").insert(log_data).execute()
+        new_id = res_db.data[0]['id']
+        
+        # AGREGAR AL HISTORIAL CON EL ID DE LA BASE DE DATOS
+        st.session_state.messages.append({"role": "assistant", "content": ai_res, "db_id": new_id})
+        st.session_state.log_buffer.append(log_data)
+        
+        # Forzar recarga para que aparezcan los dedos inmediatamente
+        st.rerun()
+
         except Exception as e:
             ai_res = f"Error al generar respuesta: {e}"
             

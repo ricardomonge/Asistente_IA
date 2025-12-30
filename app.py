@@ -146,7 +146,7 @@ if prompt:
     with st.chat_message("assistant"):
         st.markdown(ai_res)
 
-    # 4. REGISTRO EN SUPABASE (Se realiza después de mostrar la respuesta)
+    # 4. REGISTRO EN SUPABASE Y CAPTURA DE ID
     log_data = {
         "session_id": st.session_state.session_uuid,
         "nrc": st.session_state.nrc,
@@ -160,8 +160,24 @@ if prompt:
     }
     
     try:
-        supabase.table("interacciones_investigacion").insert(log_data).execute()
+        # Al insertar, guardamos el resultado para obtener el ID de la fila
+        response_db = supabase.table("interacciones_investigacion").insert(log_data).execute()
+        # Extraemos el ID generado por Supabase
+        row_id = response_db.data[0]['id']
+        
+        # 5. OPCIÓN DE FEEDBACK (DEDOS)
+        # st.feedback es una función reciente de Streamlit (v1.33+)
+        # Si tu versión es antigua, avísame para darte una alternativa con botones.
+        feedback = st.feedback("thumbs")
+        
+        if feedback is not None:
+            # Mapeamos el índice del feedback a texto
+            val = "up" if feedback == 0 else "down"
+            # Actualizamos la fila recién creada con el feedback
+            supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", row_id).execute()
+            st.toast(f"¡Gracias por tu feedback, {autor}!", icon="✅")
+
     except Exception as e:
-        st.sidebar.error(f"Error de red al guardar log: {e}")
+        st.sidebar.error(f"Error al registrar feedback: {e}")
         
     st.session_state.log_buffer.append(log_data)

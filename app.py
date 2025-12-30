@@ -100,38 +100,53 @@ with st.sidebar:
 prompt = st.chat_input("Escribe tu duda o explicación...")
 
 if prompt:
-    # 1. Registro visual
+    # 1. Registro visual del mensaje del usuario
     display_user = f"**{autor}:** {prompt}"
     st.session_state.messages.append({"role": "user", "content": display_user})
     with st.chat_message("user"):
         st.markdown(display_user)
     
-    # 2. Lógica RAG
-    contexto_txt = ""
-    if st.session_state.vector_db:
-        docs_rel = st.session_state.vector_db.similarity_search(prompt, k=3)
-        contexto_txt = "\n\nCONTEXTO MATERIAL:\n" + "\n".join([d.page_content for d in docs_rel])
+    # 2. ESPERA ACTIVA: Todo lo que tarda tiempo va dentro del spinner
+    with st.spinner("El asistente está analizando los materiales (si los subiste) y pensando su respuesta..."):
+        
+        # Lógica de búsqueda RAG
+        contexto_txt = ""
+        if st.session_state.vector_db:
+            docs_rel = st.session_state.vector_db.similarity_search(prompt, k=3)
+            contexto_txt = "\n\nCONTEXTO MATERIAL:\n" + "\n".join([d.page_content for d in docs_rel])
 
-    # 3. Respuesta de IA (Rol Experto)
-    sys_prompt = (
-        f"Eres un asistente experto en {st.session_state.tema}. "
-        "Tu tono es profesional, pedagógico y resolutivo. "
-        "Ayuda a los estudiantes a comprender el concepto y a resolver problemas paso a paso."
-        f"{contexto_txt}"
-    )
+        # Configuración del rol de la IA
+        sys_prompt = (
+            f"Eres un asistente experto en {st.session_state.tema}. "
+            "Tu tono es profesional, pedagógico y resolutivo. "
+            "Ayuda a los estudiantes a entender el concepto y resolver problemas paso a paso. "
+            "\n\nIMPORTANTE (FORMATO MATEMÁTICO): "
+            "Usa SIEMPRE LaTeX para fórmulas. "
+            "Usa un solo '$' para fórmulas en línea (ej: $z = \\frac{x - \\mu}{\\sigma}$) "
+            "y doble '$$' para fórmulas destacadas en bloques. "
+            "PROHIBIDO usar delimitadores como \( \) o \[ \]."
+    f"{contexto_txt}"
+        )
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-    ai_res = response.choices[0].message.content
-    
+        # Llamada a la API de OpenAI (aquí es donde ocurre la espera principal)
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            ai_res = response.choices[0].message.content
+            ai_res = ai_res.replace(r"\(", "$").replace(r"\)", "$").replace(r"\[", "$$").replace(r"\]", "$$")
+        except Exception as e:
+            ai_res = f"Error al generar respuesta: {e}"
+            
+
+    # 3. Mostrar respuesta de la IA (el spinner desaparece aquí)
     st.session_state.messages.append({"role": "assistant", "content": ai_res})
     with st.chat_message("assistant"):
         st.markdown(ai_res)
 
-    # 4. REGISTRO EN SUPABASE
+    # 4. REGISTRO EN SUPABASE (Se realiza después de mostrar la respuesta)
     log_data = {
         "session_id": st.session_state.session_uuid,
         "nrc": st.session_state.nrc,
@@ -147,6 +162,6 @@ if prompt:
     try:
         supabase.table("interacciones_investigacion").insert(log_data).execute()
     except Exception as e:
-        st.sidebar.error(f"Error de red: {e}")
+        st.sidebar.error(f"Error de red al guardar log: {e}")
         
     st.session_state.log_buffer.append(log_data)

@@ -1,4 +1,4 @@
-streamlit
+streamlit>=1.33.0
 pandas
 openai
 langchain
@@ -8,3 +8,4 @@ faiss-cpu
 supabase
 pypdf
 pydantic
+

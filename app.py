@@ -166,7 +166,7 @@ st.caption(f"ID Único: {st.session_state.session_uuid} | IMFE")
 
 # --- SIDEBAR ACADÉMICA ---
 with st.sidebar:
-    st.image("https://via.placeholder.com/150x50?text=IMFE+LOGO", use_container_width=True) # Puedes poner tu logo real
+    st.image("https://raw.githubusercontent.com/ricardomonge/Asistente_IA/refs/heads/main/image/logo.png", use_container_width=True) # Puedes poner tu logo real
     st.header("Control de sesión")
     
     # Resumen de datos de la sesión

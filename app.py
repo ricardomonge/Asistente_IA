@@ -128,6 +128,16 @@ with st.sidebar:
         st.markdown(f"**NRC:** {st.session_state.nrc}")
         st.markdown(f"**Grupo:** {st.session_state.grupo}")
         st.markdown(f"**Estudiantes:** {len(st.session_state.estudiantes)}")
+
+    # ============ INDICADOR DE MODO RAG ===
+    st.markdown("**Estado de la IA**")
+    if st.session_state.vector_db:
+        st.success("Base de conocimiento activa", icon="✅")
+        st.caption("La IA está consultando tus documentos PDF para responder.")
+    else:
+        st.warning("Modo conocimiento general", icon="🌐")
+        st.caption("No se detectaron archivos. La IA responde según su entrenamiento base.")
+    # ===========================================
     
     # Selector de autor
     autor = st.selectbox("📝 Estudiante interactuando:", st.session_state.estudiantes)

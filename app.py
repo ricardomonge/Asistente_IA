@@ -87,38 +87,40 @@ st.sidebar.markdown(f"**ID de Sesión:** `{st.session_state.session_uuid}`")
 for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-           if msg["role"] == "assistant" and "db_id" in msg:
+        
+        # Si el mensaje es de la IA y tiene un ID de base de datos
+        if msg["role"] == "assistant" and "db_id" in msg:
             f_key = f"fb_{msg['db_id']}"
+            # feedback: 0 es abajo (👎), 1 es arriba (👍)
             feedback = st.feedback("thumbs", key=f_key)
             
             if feedback is not None:
-                val = "up" if feedback == 1 else "down" 
+                val = "up" if feedback == 1 else "down"
                 
                 try:
-                    # Actualizamos el pulgar (up/down)
+                    # 1. Actualizamos el pulgar (up/down) en Supabase
                     supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
                     
-                    # SI EL FEEDBACK ES NEGATIVO, MOSTRAR CUADRO DE TEXTO
-                    if val == "down":
-                        # Usamos una key única para el cuadro de texto
+                    # 2. Si el feedback es negativo (0), mostramos el cuadro de texto
+                    if feedback == 0: 
                         t_key = f"txt_{msg['db_id']}"
                         comentario = st.text_input(
                             "¿Cómo podemos mejorar esta respuesta?", 
                             key=t_key,
-                            placeholder="Ej: El cálculo es incorrecto o falta claridad..."
+                            placeholder="Ej: La respuesta es incorrecta o no es clara..."
                         )
                         
-                        # Si el estudiante escribe algo, lo guardamos
+                        # Si el estudiante escribe y presiona Enter
                         if comentario:
                             supabase.table("interacciones_investigacion").update({"feedback_text": comentario}).eq("id", msg["db_id"]).execute()
                             st.toast("Comentario guardado. ¡Gracias!", icon="📝")
                     
-                    # Mensaje de agradecimiento general
-                    elif val == "up":
+                    # 3. Mensajes de confirmación (toast)
+                    elif feedback == 1:
                         st.toast("¡Gracias! Feedback positivo registrado.", icon="👍")
                         
                 except Exception as e:
-                    pass
+                    pass # Evita que errores de red bloqueen la interfaz
 
 
 with st.sidebar:

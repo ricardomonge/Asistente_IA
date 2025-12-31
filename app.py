@@ -39,26 +39,57 @@ if "vector_db" not in st.session_state:
     st.session_state.vector_db = None
 
 # ==========================================
-# 2. PANTALLA DE CONFIGURACIÓN
+# 2. PANTALLA DE CONFIGURACIÓN (DISEÑO PRO)
 # ==========================================
 if not st.session_state.configurado:
-    st.title("🔬 Configuración de la sesión")
-    st.info("Ingresa los datos del grupo para habilitar el asistente.")
-    
-    with st.form("registro"):
-        col1, col2 = st.columns(2)
-        with col1:
-            nrc = st.text_input("Asignatura/NRC")
-            grupo = st.text_input("ID del grupo")
-            tema = st.text_input("Tema a trabajar", placeholder="Ej: Distribución Normal")
-        with col2:
-            archivo_pdf = st.file_uploader("Subir materiales (opcional)", type="pdf")
-            integrantes = st.text_area("Integrantes (uno por línea)")
+    # Encabezado con estilo
+    col_logo, col_titulo = st.columns([1, 8])
+    with col_logo:
+        st.markdown("# 🔬")
+    with col_titulo:
+        st.title("Configuración del Entorno de Aprendizaje")
+        st.markdown("_Asistente de IA Colaborativa_")
+
+    # Panel de instrucciones fuera del formulario para mayor visibilidad
+    with st.expander("📖 Instrucciones de uso y guía de registro", expanded=True):
+        st.markdown("""
+        Para iniciar la sesión de estudio y recolección de datos, siga estos pasos:
+        1. **Identificación**: Ingrese el código de su asignatura  y el NRC y el ID asignado a su grupo.
+        2. **Contexto**: Defina claramente el **Tema** (ej: _Distribución Normal_). Esto ayuda a la IA a enfocar sus explicaciones.
+        3. **Materiales**: Si cuenta con una guía o apunte en PDF, súbalo. El asistente dará prioridad a ese contenido.
+        4. **Equipo**: Registre a los integrantes. Esto permitirá asignar correctamente el **feedback** y los turnos de interacción.
+        """)
+
+    st.divider()
+
+    # Formulario con mejor distribución
+    with st.form("registro_mejorado"):
+        st.subheader("🛠️ Panel de Control de sesión")
         
-        if st.form_submit_button("Lanzar asistente"):
+        col_a, col_b = st.columns([1, 1], gap="large")
+        
+        with col_a:
+            st.markdown("**Datos del curso**")
+            nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej: MAT101 / 2345")
+            grupo = st.text_input("Identificador del Grupo", placeholder="Ej: Grupo A-1")
+            tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej: Distribución Normal")
+            
+        with col_b:
+            st.markdown("**Recursos y participantes**")
+            archivo_pdf = st.file_uploader("Documentación de apoyo (PDF)", type="pdf", 
+                                         help="Opcional. Si lo sube, el asistente usará este material como base única.")
+            integrantes = st.text_area("Lista de estudiantes integrantes del grupo (uno por línea)", 
+                                      placeholder="Juan Pérez\nMaría González...", height=110)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Botón destacado
+        lanzar = st.form_submit_button("🚀 Inicializar asistente académico", use_container_width=True)
+        
+        if lanzar:
             if nrc and grupo and tema and integrantes:
                 if archivo_pdf:
-                    with st.spinner("Indexando PDF..."):
+                    with st.spinner("⏳ Analizando e indexando materiales pedagógicos..."):
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             tmp.write(archivo_pdf.getvalue())
                             loader = PyPDFLoader(tmp.name)
@@ -67,6 +98,7 @@ if not st.session_state.configurado:
                             st.session_state.vector_db = FAISS.from_documents(docs, embeddings)
                         os.remove(tmp.name)
                 
+                # Guardar en estado de sesión
                 st.session_state.nrc = nrc
                 st.session_state.grupo = grupo
                 st.session_state.tema = tema
@@ -74,7 +106,8 @@ if not st.session_state.configurado:
                 st.session_state.configurado = True
                 st.rerun()
             else:
-                st.warning("Completa todos los campos obligatorios.")
+                st.error("❌ Por favor, complete todos los campos obligatorios antes de continuar.")
+
     st.stop()
 
 # ==========================================

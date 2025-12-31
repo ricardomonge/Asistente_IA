@@ -1,0 +1,2 @@
+[server]
+maxUploadSize = 25  # Cambia 25 por el límite en MB que desees

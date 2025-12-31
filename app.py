@@ -200,11 +200,10 @@ with st.sidebar:
     #    2. **Valida con el PDF**: Si subiste material, pide a la IA que cite la página o sección.
     #    3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
     #    """)
-
-    st.divider()
+    
     st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas con el material oficial del curso.")
     
-    # st.divider()
+    st.divider()
 
     # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN
     if "finalizado" not in st.session_state:

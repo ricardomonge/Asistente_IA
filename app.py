@@ -355,8 +355,3 @@ if prompt:
         st.sidebar.error(f"Error de registro: {e}")
         
     st.session_state.log_buffer.append(log_data)
-
-# --- ADVERTENCIA DE INTEGRIDAD AL FINAL DE LA PÁGINA ---
-st.markdown("<br><br>", unsafe_allow_html=True) # Espacio en blanco para separar del chat
-st.divider() 
-st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas.")

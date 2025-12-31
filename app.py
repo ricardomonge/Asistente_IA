@@ -305,7 +305,7 @@ if prompt:
             "Usa SIEMPRE LaTeX para fórmulas. "
             "Usa un solo '$' para fórmulas en línea (ej: $z = \\frac{x - \\mu}{\\sigma}$) "
             "y doble '$$' para fórmulas destacadas en bloques. "
-            "PROHIBIDO usar delimitadores como \( \) o \[ \]."
+            r"PROHIBIDO usar delimitadores como \( \) o \[ \]."
     f"{contexto_txt}"
         )
 

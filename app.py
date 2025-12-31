@@ -86,6 +86,30 @@ if not st.session_state.configurado:
             )
         
         st.markdown("<br>", unsafe_allow_html=True)
+        
+        # --- ESTILO CSS PARA EL BOTÓN AZUL TENUE ---
+        st.markdown("""
+            <style>
+            /* Buscamos el botón dentro del formulario */
+            div.stButton > button:first-child {
+                background-color: #E1F5FE !important; /* Azul tenue */
+                color: #01579B !important;            /* Texto azul oscuro */
+                border: 1px solid #B3E5FC !important; /* Borde sutil */
+                border-radius: 8px;                   /* Bordes redondeados */
+                transition: all 0.3s ease;            /* Animación suave */
+                font-weight: bold;
+            }
+            /* Efecto al pasar el mouse */
+            div.stButton > button:first-child:hover {
+                background-color: #B3E5FC !important; /* Se oscurece un poco */
+                border: 1px solid #81D4FA !important;
+                color: #01579B !important;
+                transform: scale(1.01);               /* Crece levemente */
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # Botón de lanzamiento (mantiene la lógica funcional)
         lanzar = st.form_submit_button("🚀 Inicializar Asistente Académico", use_container_width=True)
         
         if lanzar:

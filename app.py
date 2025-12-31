@@ -110,7 +110,7 @@ if not st.session_state.configurado:
         """, unsafe_allow_html=True)
 
         # Botón de lanzamiento (mantiene la lógica funcional)
-        lanzar = st.form_submit_button("🚀 Inicializar Asistente Académico", use_container_width=True)
+        lanzar = st.form_submit_button("🚀 Inicializar Asistente Académico", width='stretch')
         
         if lanzar:
             if nrc and grupo and tema and integrantes:
@@ -166,7 +166,7 @@ st.caption(f"ID Único: {st.session_state.session_uuid} | IMFE")
 
 # --- SIDEBAR ACADÉMICA ---
 with st.sidebar:
-    st.image("https://raw.githubusercontent.com/ricardomonge/Asistente_IA/refs/heads/main/image/logo.png", use_container_width=True) # Puedes poner tu logo real
+    st.image("https://raw.githubusercontent.com/ricardomonge/Asistente_IA/refs/heads/main/image/logo.png", width='stretch') # Puedes poner tu logo real
     st.header("Control de sesión")
     
     # Resumen de datos de la sesión
@@ -194,21 +194,21 @@ with st.sidebar:
     st.divider()
     
     # Guía de Apoyo Académico (Fomenta CoT)
-    with st.expander("💡 Tips para aprender mejor"):
-        st.info("""
-        1. **Pregunta el 'Por qué'**: No solo pidas el resultado, pide el razonamiento paso a paso.
-        2. **Valida con el PDF**: Si subiste material, pide a la IA que cite la página o sección.
-        3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
-        """)
+    # with st.expander("💡 Tips para aprender mejor"):
+    #    st.info("""
+    #    1. **Pregunta el 'Por qué'**: No solo pidas el resultado, pide el razonamiento paso a paso.
+    #    2. **Valida con el PDF**: Si subiste material, pide a la IA que cite la página o sección.
+    #    3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
+    #    """)
 
-    st.divider()
+    # st.divider()
 
     # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN
     if "finalizado" not in st.session_state:
         st.session_state.finalizado = False
 
     if not st.session_state.finalizado:
-        if st.button("🔴 Finalizar sesión", use_container_width=True):
+        if st.button("🔴 Finalizar sesión", width='stretch'):
             st.session_state.esperando_confirmacion = True
         
         if st.session_state.get("esperando_confirmacion"):

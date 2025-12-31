@@ -42,7 +42,6 @@ if "vector_db" not in st.session_state:
 # 2. PANTALLA DE CONFIGURACIÓN (DISEÑO PRO)
 # ==========================================
 if not st.session_state.configurado:
-    # Encabezado institucional
     col_logo, col_titulo = st.columns([1, 8])
     with col_logo:
         st.markdown("# 🔬")
@@ -50,13 +49,12 @@ if not st.session_state.configurado:
         st.title("Configuración del Entorno de Aprendizaje")
         st.markdown("_Asistente de IA Colaborativa | IMFE_")
 
-    # Panel de instrucciones
     with st.expander("📖 Guía de Registro e Instrucciones", expanded=True):
         st.markdown("""
         1. **Identificación**: Ingrese el NRC y el ID de su grupo.
         2. **Tema**: Defina el concepto a tratar (ej: Distribución Normal).
         3. **Materiales**: Puede subir **múltiples archivos PDF**. La IA los integrará todos.
-        4. **Integrantes**: Registre los nombres uno por línea.
+        4. **Límite de Carga**: Por estabilidad, el total de archivos no debe superar los **20 MB**.
         """)
 
     st.divider()
@@ -73,14 +71,18 @@ if not st.session_state.configurado:
             
         with col_right:
             st.markdown("**Recursos y Participantes**")
-            # CARGA MÚLTIPLE HABILITADA
             archivos_pdf = st.file_uploader(
                 "Subir materiales (PDF)", 
                 type="pdf", 
                 accept_multiple_files=True, 
-                help="Seleccione todos los archivos necesarios para la sesión."
+                help="El tamaño total de los archivos no debe exceder 20 MB."
             )
-            integrantes = st.text_area("Integrantes (uno por línea)", height=110)
+# LÍNEA CORREGIDA CON PLACEHOLDER
+            integrantes = st.text_area(
+                "Integrantes del grupo (uno por línea)", 
+                placeholder="Juan P.\nMaría G.\nPedro A. ...", 
+                height=110
+            )
         
         st.markdown("<br>", unsafe_allow_html=True)
         lanzar = st.form_submit_button("🚀 Inicializar Asistente", use_container_width=True)
@@ -88,30 +90,41 @@ if not st.session_state.configurado:
         if lanzar:
             if nrc and grupo and tema and integrantes:
                 if archivos_pdf:
-                    with st.spinner("⏳ Indexando múltiples documentos..."):
-                        todos_los_docs = []
-                        # Procesamos cada archivo de la lista
-                        for archivo in archivos_pdf:
-                            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                                tmp.write(archivo.getvalue())
-                                loader = PyPDFLoader(tmp.name)
-                                todos_los_docs.extend(loader.load_and_split())
-                            os.remove(tmp.name)
-                        
-                        # Creación del almacén vectorial con todos los documentos
-                        embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
-                        st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
-                        # Guardamos nombres para la barra lateral
-                        st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
-                
-                st.session_state.nrc = nrc
-                st.session_state.grupo = grupo
-                st.session_state.tema = tema
-                st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
-                st.session_state.configurado = True
-                st.rerun()
+                    # --- VALIDACIÓN DE TAMAÑO DE LOTE (20 MB) ---
+                    total_size_mb = sum([f.size for f in archivos_pdf]) / (1024 * 1024)
+                    
+                    if total_size_mb > 20:
+                        st.error(f"❌ El tamaño total de los archivos ({total_size_mb:.2f} MB) excede el límite de 20 MB. Por favor, suba archivos más ligeros.")
+                    else:
+                        with st.spinner("⏳ Indexando materiales pedagógicos..."):
+                            todos_los_docs = []
+                            for archivo in archivos_pdf:
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                                    tmp.write(archivo.getvalue())
+                                    loader = PyPDFLoader(tmp.name)
+                                    todos_los_docs.extend(loader.load_and_split())
+                                os.remove(tmp.name)
+                            
+                            embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
+                            st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
+                            st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
+                            
+                            st.session_state.nrc = nrc
+                            st.session_state.grupo = grupo
+                            st.session_state.tema = tema
+                            st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
+                            st.session_state.configurado = True
+                            st.rerun()
+                else:
+                    # Si no hay archivos, inicializa conocimiento general
+                    st.session_state.nrc = nrc
+                    st.session_state.grupo = grupo
+                    st.session_state.tema = tema
+                    st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
+                    st.session_state.configurado = True
+                    st.rerun()
             else:
-                st.error("❌ Complete los campos obligatorios.")
+                st.error("❌ Por favor, complete todos los campos obligatorios.")
     st.stop()
 
 # ==========================================
@@ -137,7 +150,6 @@ with st.sidebar:
     st.markdown("**Estado de la IA**")
     if st.session_state.get("vector_db"):
         st.success("Base de conocimiento activa", icon="✅")
-        # Listado dinámico de archivos subidos
         nombres = st.session_state.get('nombres_archivos', [])
         with st.expander(f"📚 Archivos en memoria ({len(nombres)})"):
             for nombre in nombres:

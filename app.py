@@ -182,43 +182,51 @@ for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         
-        # Si el mensaje es de la IA y tiene un ID de base de datos
         if msg["role"] == "assistant" and "db_id" in msg:
             f_key = f"fb_{msg['db_id']}"
-            # feedback: 0 es abajo (👎), 1 es arriba (👍)
             feedback = st.feedback("thumbs", key=f_key)
             
-            if feedback is not None:
+            # --- MEJORA DE CONSISTENCIA ---
+            # Creamos una llave en el estado de sesión para saber si ya procesamos este feedback
+            processed_key = f"last_state_{f_key}"
+            
+            if feedback is not None and st.session_state.get(processed_key) != feedback:
                 val = "up" if feedback == 1 else "down"
-                
                 try:
-                    # 1. Actualizamos el pulgar (up/down) en Supabase
+                    # Actualizamos Supabase solo si el valor cambió
                     supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
+                    st.session_state[processed_key] = feedback # Guardamos el estado actual como procesado
                     
-                    # 2. Si el feedback es negativo (0), mostramos el cuadro de texto
-                    if feedback == 0: 
-                        t_key = f"txt_{msg['db_id']}"
-                        comentario = st.text_input(
-                            "¿Cómo podemos mejorar esta respuesta?", 
-                            key=t_key,
-                            placeholder="Ej: La respuesta es incorrecta o no es clara..."
-                        )
-                        
-                        # Si el estudiante escribe y presiona Enter
-                        if comentario:
-                            supabase.table("interacciones_investigacion").update({"feedback_text": comentario}).eq("id", msg["db_id"]).execute()
-                            st.toast("Comentario guardado. ¡Gracias!", icon="📝")
-                    
-                    # 3. Mensajes de confirmación (toast)
-                    elif feedback == 1:
+                    # Mostramos el mensaje solo en el momento del click
+                    if val == "up":
                         st.toast("¡Gracias! Feedback positivo registrado.", icon="👍")
-                        
+                    else:
+                        st.toast("Feedback negativo registrado.", icon="👎")
                 except Exception as e:
-                    pass # Evita que errores de red bloqueen la interfaz
+                    pass
+
+            # Lógica del cuadro de texto cualitativo
+            if feedback == 0: 
+                t_key = f"txt_{msg['db_id']}"
+                comentario = st.text_input(
+                    "¿Cómo podemos mejorar esta respuesta?", 
+                    key=t_key,
+                    placeholder="Ej: La respuesta es incorrecta o no es clara..."
+                )
+                
+                # Verificamos si el comentario es nuevo para no repetir el agradecimiento
+                comment_key = f"last_com_{msg['db_id']}"
+                if comentario and st.session_state.get(comment_key) != comentario:
+                    try:
+                        supabase.table("interacciones_investigacion").update({"feedback_text": comentario}).eq("id", msg["db_id"]).execute()
+                        st.session_state[comment_key] = comentario # Marcamos comentario como guardado
+                        st.toast("Comentario guardado. ¡Gracias!", icon="📝")
+                    except:
+                        pass
 
 # --- ENTRADA DE MENSAJES (Bloqueada si terminó la sesión) ---
 if not st.session_state.finalizado:
-    prompt = st.chat_input("Escribe tu duda o explicación...")
+    prompt = st.chat_input("Escribe...")
 else:
     st.info("La sesión ha finalizado. Los datos han sido resguardados en el servidor. Gracias por participar.")
     prompt = None

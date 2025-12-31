@@ -96,10 +96,16 @@ for i, msg in enumerate(st.session_state.messages):
             
             # Si el estudiante hace clic o cambia su selección
             if feedback is not None:
-                val = "up" if feedback == 0 else "down"
+                val = "up" if feedback == 1 else "down"
                 try:
                     # Actualizamos la fila en Supabase con la última selección
                     supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
+                    # --- Mensaje de confirmación ---
+                    if val == "up":
+                        st.toast("¡Gracias! Feedback positivo registrado.", icon="👍")
+                    else:
+                        st.toast("Feedback negativo registrado. Revisaremos esta respuesta.", icon="👎")
+                    # ---------------------------------------------                    
                 except Exception as e:
                     pass # Silencioso para no interrumpir la experiencia del usuario
 

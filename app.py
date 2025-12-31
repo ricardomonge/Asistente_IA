@@ -55,7 +55,7 @@ if not st.session_state.configurado:
         1. **Identificación**: Ingrese el NRC y el ID de su grupo de trabajo.
         2. **Tema**: Defina el concepto a tratar (ej: Distribución Normal).
         3. **Materiales**: Puede subir varios archivos PDF. 
-        4. **Restricción de Peso**: El sistema solo aceptará un total de **20 MB** entre todos los archivos para asegurar la rapidez de la respuesta.
+        4. **Restricción de Peso**: El sistema solo aceptará un total de **25 MB** entre todos los archivos para asegurar la rapidez de la respuesta.
         """)
 
     st.divider()
@@ -72,12 +72,12 @@ if not st.session_state.configurado:
             
         with col_right:
             st.markdown("**Recursos y Participantes**")
-            # Actualizamos el 'help' para que sea coherente con nuestra lógica de 20MB
+            # Actualizamos el 'help' para que sea coherente con nuestra lógica de 25MB
             archivos_pdf = st.file_uploader(
                 "Subir materiales (PDF)", 
                 type="pdf", 
                 accept_multiple_files=True, 
-                help="Límite máximo del lote completo: 20 MB."
+                help="Límite máximo del lote completo: 25 MB."
             )
             integrantes = st.text_area(
                 "Integrantes del grupo (uno por línea)", 
@@ -94,9 +94,9 @@ if not st.session_state.configurado:
                     # Cálculo del tamaño total del lote
                     total_size_mb = sum([f.size for f in archivos_pdf]) / (1024 * 1024)
                     
-                    if total_size_mb > 20:
-                        # Error explícito si se pasan de los 20MB que definimos
-                        st.error(f"❌ El total de archivos ({total_size_mb:.2f} MB) supera el límite de 20 MB permitido para esta investigación.")
+                    if total_size_mb > 25:
+                        # Error explícito si se pasan de los 25MB que definimos
+                        st.error(f"❌ El total de archivos ({total_size_mb:.2f} MB) supera el límite de 25 MB permitido para esta investigación.")
                     else:
                         with st.spinner("⏳ Procesando materiales pedagógicos..."):
                             todos_los_docs = []

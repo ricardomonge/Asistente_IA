@@ -42,63 +42,68 @@ if "vector_db" not in st.session_state:
 # 2. PANTALLA DE CONFIGURACIÓN (DISEÑO PRO)
 # ==========================================
 if not st.session_state.configurado:
-    # Encabezado con estilo
+    # Encabezado institucional
     col_logo, col_titulo = st.columns([1, 8])
     with col_logo:
         st.markdown("# 🔬")
     with col_titulo:
         st.title("Configuración del Entorno de Aprendizaje")
-        st.markdown("_Asistente de IA Colaborativa_")
+        st.markdown("_Asistente de IA Colaborativa | IMFE_")
 
-    # Panel de instrucciones fuera del formulario para mayor visibilidad
-    with st.expander("📖 Instrucciones de uso y guía de registro", expanded=True):
+    # Panel de instrucciones
+    with st.expander("📖 Guía de Registro e Instrucciones", expanded=True):
         st.markdown("""
-        Para iniciar la sesión de estudio y recolección de datos, siga estos pasos:
-        1. **Identificación**: Ingrese el código de su asignatura  y el NRC y el ID asignado a su grupo.
-        2. **Contexto**: Defina claramente el **Tema** (ej: _Distribución Normal_). Esto ayuda a la IA a enfocar sus explicaciones.
-        3. **Materiales**: Si cuenta con una guía o apunte en PDF, súbalo. El asistente dará prioridad a ese contenido.
-        4. **Equipo**: Registre a los integrantes. Esto permitirá asignar correctamente el **feedback** y los turnos de interacción.
+        1. **Identificación**: Ingrese el NRC y el ID de su grupo.
+        2. **Tema**: Defina el concepto a tratar (ej: Distribución Normal).
+        3. **Materiales**: Puede subir **múltiples archivos PDF**. La IA los integrará todos.
+        4. **Integrantes**: Registre los nombres uno por línea.
         """)
 
     st.divider()
 
-    # Formulario con mejor distribución
-    with st.form("registro_mejorado"):
-        st.subheader("🛠️ Panel de control de sesión")
+    with st.form("registro_investigacion"):
+        st.subheader("🛠️ Panel de Control de Sesión")
+        col_left, col_right = st.columns([1, 1], gap="large")
         
-        col_a, col_b = st.columns([1, 1], gap="large")
-        
-        with col_a:
-            st.markdown("**Datos del curso**")
+        with col_left:
+            st.markdown("**Administración**")
             nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej: MAT101 / 2345")
             grupo = st.text_input("Identificador del Grupo", placeholder="Ej: Grupo A-1")
-            tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej: Distribución Normal")
+            tema = st.text_input("Tema a trabajar", placeholder="Ej: Distribución Normal")
             
-        with col_b:
-            st.markdown("**Recursos y participantes**")
-            archivo_pdf = st.file_uploader("Documentación de apoyo (PDF)", type="pdf", 
-                                         help="Opcional. Si lo sube, el asistente usará este material como base única.")
-            integrantes = st.text_area("Lista de estudiantes integrantes del grupo (uno por línea)", 
-                                      placeholder="Juan Pérez\nMaría González...", height=110)
+        with col_right:
+            st.markdown("**Recursos y Participantes**")
+            # CARGA MÚLTIPLE HABILITADA
+            archivos_pdf = st.file_uploader(
+                "Subir materiales (PDF)", 
+                type="pdf", 
+                accept_multiple_files=True, 
+                help="Seleccione todos los archivos necesarios para la sesión."
+            )
+            integrantes = st.text_area("Integrantes (uno por línea)", height=110)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Botón destacado
-        lanzar = st.form_submit_button("🚀 Inicializar asistente académico", use_container_width=True)
+        lanzar = st.form_submit_button("🚀 Inicializar Asistente", use_container_width=True)
         
         if lanzar:
             if nrc and grupo and tema and integrantes:
-                if archivo_pdf:
-                    with st.spinner("⏳ Analizando e indexando materiales pedagógicos..."):
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                            tmp.write(archivo_pdf.getvalue())
-                            loader = PyPDFLoader(tmp.name)
-                            docs = loader.load_and_split()
-                            embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
-                            st.session_state.vector_db = FAISS.from_documents(docs, embeddings)
-                        os.remove(tmp.name)
+                if archivos_pdf:
+                    with st.spinner("⏳ Indexando múltiples documentos..."):
+                        todos_los_docs = []
+                        # Procesamos cada archivo de la lista
+                        for archivo in archivos_pdf:
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                                tmp.write(archivo.getvalue())
+                                loader = PyPDFLoader(tmp.name)
+                                todos_los_docs.extend(loader.load_and_split())
+                            os.remove(tmp.name)
+                        
+                        # Creación del almacén vectorial con todos los documentos
+                        embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
+                        st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
+                        # Guardamos nombres para la barra lateral
+                        st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
                 
-                # Guardar en estado de sesión
                 st.session_state.nrc = nrc
                 st.session_state.grupo = grupo
                 st.session_state.tema = tema
@@ -106,8 +111,7 @@ if not st.session_state.configurado:
                 st.session_state.configurado = True
                 st.rerun()
             else:
-                st.error("❌ Por favor, complete todos los campos obligatorios antes de continuar.")
-
+                st.error("❌ Complete los campos obligatorios.")
     st.stop()
 
 # ==========================================
@@ -129,15 +133,19 @@ with st.sidebar:
         st.markdown(f"**Grupo:** {st.session_state.grupo}")
         st.markdown(f"**Estudiantes:** {len(st.session_state.estudiantes)}")
 
-    # ============ INDICADOR DE MODO RAG ===
+# ============ INDICADOR DE MODO RAG ACTUALIZADO ===
     st.markdown("**Estado de la IA**")
-    if st.session_state.vector_db:
+    if st.session_state.get("vector_db"):
         st.success("Base de conocimiento activa", icon="✅")
-        st.caption("La IA está consultando tus documentos PDF para responder.")
+        # Listado dinámico de archivos subidos
+        nombres = st.session_state.get('nombres_archivos', [])
+        with st.expander(f"📚 Archivos en memoria ({len(nombres)})"):
+            for nombre in nombres:
+                st.caption(f"• {nombre}")
     else:
         st.warning("Modo conocimiento general", icon="🌐")
-        st.caption("No se detectaron archivos. La IA responde según su entrenamiento base.")
-    # ===========================================
+        st.caption("No hay archivos cargados.")
+    # ==================================================
     
     # Selector de autor
     autor = st.selectbox("📝 Estudiante interactuando:", st.session_state.estudiantes)

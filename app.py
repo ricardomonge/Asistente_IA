@@ -201,6 +201,9 @@ with st.sidebar:
     #    3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
     #    """)
 
+    st.divider()
+    st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas con el material oficial del curso.")
+    
     # st.divider()
 
     # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN
@@ -225,7 +228,6 @@ with st.sidebar:
                     st.rerun()
     else:
         st.error("🔒 Sesión Concluida")
-
 
 for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):

@@ -49,12 +49,13 @@ if not st.session_state.configurado:
         st.title("Configuración del Entorno de Aprendizaje")
         st.markdown("_Asistente de IA Colaborativa | IMFE_")
 
+    # Guía clara para el estudiante
     with st.expander("📖 Guía de Registro e Instrucciones", expanded=True):
         st.markdown("""
-        1. **Identificación**: Ingrese el NRC y el ID de su grupo.
+        1. **Identificación**: Ingrese el NRC y el ID de su grupo de trabajo.
         2. **Tema**: Defina el concepto a tratar (ej: Distribución Normal).
-        3. **Materiales**: Puede subir **múltiples archivos PDF**. La IA los integrará todos.
-        4. **Límite de Carga**: Por estabilidad, el total de archivos no debe superar los **20 MB**.
+        3. **Materiales**: Puede subir varios archivos PDF. 
+        4. **Restricción de Peso**: El sistema solo aceptará un total de **20 MB** entre todos los archivos para asegurar la rapidez de la respuesta.
         """)
 
     st.divider()
@@ -64,20 +65,20 @@ if not st.session_state.configurado:
         col_left, col_right = st.columns([1, 1], gap="large")
         
         with col_left:
-            st.markdown("**Administración**")
+            st.markdown("**Administración del Curso**")
             nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej: MAT101 / 2345")
             grupo = st.text_input("Identificador del Grupo", placeholder="Ej: Grupo A-1")
-            tema = st.text_input("Tema a trabajar", placeholder="Ej: Distribución Normal")
+            tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej: Distribución Normal")
             
         with col_right:
             st.markdown("**Recursos y Participantes**")
+            # Actualizamos el 'help' para que sea coherente con nuestra lógica de 20MB
             archivos_pdf = st.file_uploader(
                 "Subir materiales (PDF)", 
                 type="pdf", 
                 accept_multiple_files=True, 
-                help="El tamaño total de los archivos no debe exceder 20 MB."
+                help="Límite máximo del lote completo: 20 MB."
             )
-# LÍNEA CORREGIDA CON PLACEHOLDER
             integrantes = st.text_area(
                 "Integrantes del grupo (uno por línea)", 
                 placeholder="Juan P.\nMaría G.\nPedro A. ...", 
@@ -85,18 +86,19 @@ if not st.session_state.configurado:
             )
         
         st.markdown("<br>", unsafe_allow_html=True)
-        lanzar = st.form_submit_button("🚀 Inicializar Asistente", use_container_width=True)
+        lanzar = st.form_submit_button("🚀 Inicializar Asistente Académico", use_container_width=True)
         
         if lanzar:
             if nrc and grupo and tema and integrantes:
                 if archivos_pdf:
-                    # --- VALIDACIÓN DE TAMAÑO DE LOTE (20 MB) ---
+                    # Cálculo del tamaño total del lote
                     total_size_mb = sum([f.size for f in archivos_pdf]) / (1024 * 1024)
                     
                     if total_size_mb > 20:
-                        st.error(f"❌ El tamaño total de los archivos ({total_size_mb:.2f} MB) excede el límite de 20 MB. Por favor, suba archivos más ligeros.")
+                        # Error explícito si se pasan de los 20MB que definimos
+                        st.error(f"❌ El total de archivos ({total_size_mb:.2f} MB) supera el límite de 20 MB permitido para esta investigación.")
                     else:
-                        with st.spinner("⏳ Indexando materiales pedagógicos..."):
+                        with st.spinner("⏳ Procesando materiales pedagógicos..."):
                             todos_los_docs = []
                             for archivo in archivos_pdf:
                                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -105,10 +107,12 @@ if not st.session_state.configurado:
                                     todos_los_docs.extend(loader.load_and_split())
                                 os.remove(tmp.name)
                             
+                            # Generación del vector store unificado
                             embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
                             st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
                             st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
                             
+                            # Guardar metadatos y cambiar estado
                             st.session_state.nrc = nrc
                             st.session_state.grupo = grupo
                             st.session_state.tema = tema
@@ -116,7 +120,7 @@ if not st.session_state.configurado:
                             st.session_state.configurado = True
                             st.rerun()
                 else:
-                    # Si no hay archivos, inicializa conocimiento general
+                    # Inicialización sin archivos (Conocimiento general)
                     st.session_state.nrc = nrc
                     st.session_state.grupo = grupo
                     st.session_state.tema = tema
@@ -125,6 +129,7 @@ if not st.session_state.configurado:
                     st.rerun()
             else:
                 st.error("❌ Por favor, complete todos los campos obligatorios.")
+
     st.stop()
 
 # ==========================================

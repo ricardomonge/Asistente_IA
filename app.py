@@ -167,6 +167,7 @@ st.caption(f"ID Único: {st.session_state.session_uuid} | IMFE")
 # --- SIDEBAR ACADÉMICA ---
 with st.sidebar:
     st.image("https://raw.githubusercontent.com/ricardomonge/Asistente_IA/refs/heads/main/image/logo.png", width='stretch') 
+    st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas.")    
     st.header("Control de sesión")
     
     # Resumen de datos de la sesión
@@ -200,7 +201,6 @@ with st.sidebar:
     #    3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
     #    """)
     
-    st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas.")
     # st.divider()
 
     # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN

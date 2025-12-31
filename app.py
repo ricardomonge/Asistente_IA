@@ -191,8 +191,7 @@ with st.sidebar:
     # Selector de autor
     autor = st.selectbox("📝 Estudiante interactuando:", st.session_state.estudiantes)
     
-    st.divider()
-    
+    # st.divider()
     # Guía de Apoyo Académico (Fomenta CoT)
     # with st.expander("💡 Tips para aprender mejor"):
     #    st.info("""
@@ -201,9 +200,8 @@ with st.sidebar:
     #    3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
     #    """)
     
-    st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas con el material oficial del curso.")
-    
-    st.divider()
+    st.caption("⚠️ **Aviso importante:** Este asistente puede cometer errores; por lo tanto, revisa y verifica siempre sus respuestas.")
+    # st.divider()
 
     # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN
     if "finalizado" not in st.session_state:

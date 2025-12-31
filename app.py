@@ -64,7 +64,7 @@ if not st.session_state.configurado:
 
     # Formulario con mejor distribución
     with st.form("registro_mejorado"):
-        st.subheader("🛠️ Panel de Control de sesión")
+        st.subheader("🛠️ Panel de control de sesión")
         
         col_a, col_b = st.columns([1, 1], gap="large")
         
@@ -111,10 +111,61 @@ if not st.session_state.configurado:
     st.stop()
 
 # ==========================================
-# 3. INTERFAZ DE CHAT Y LOGGING
+# 3. INTERFAZ DE CHAT Y CONTROL DE SESIÓN
 # ==========================================
-st.title(f"🤖 Asistente: {st.session_state.tema}")
-st.sidebar.markdown(f"**ID de Sesión:** `{st.session_state.session_uuid}`")
+
+# Título y subtítulo profesional
+st.title(f"🤖 Laboratorio IA: {st.session_state.tema}")
+st.caption(f"ID Único: {st.session_state.session_uuid} | IMFE")
+
+# --- SIDEBAR ACADÉMICA ---
+with st.sidebar:
+    st.image("https://via.placeholder.com/150x50?text=IMFE+LOGO", use_container_width=True) # Puedes poner tu logo real
+    st.header("Control de sesión")
+    
+    # Resumen de datos de la sesión
+    with st.container(border=True):
+        st.markdown(f"**NRC:** {st.session_state.nrc}")
+        st.markdown(f"**Grupo:** {st.session_state.grupo}")
+        st.markdown(f"**Estudiantes:** {len(st.session_state.estudiantes)}")
+    
+    # Selector de autor
+    autor = st.selectbox("📝 Estudiante interactuando:", st.session_state.estudiantes)
+    
+    st.divider()
+    
+    # Guía de Apoyo Académico (Fomenta CoT)
+    with st.expander("💡 Tips para aprender mejor"):
+        st.info("""
+        1. **Pregunta el 'Por qué'**: No solo pidas el resultado, pide el razonamiento paso a paso.
+        2. **Valida con el PDF**: Si subiste material, pide a la IA que cite la página o sección.
+        3. **Corrige a la IA**: Si detectas un error en una fórmula, explícaselo para ver cómo rectifica.
+        """)
+
+    st.divider()
+
+    # BOTÓN DE FINALIZACIÓN CON DOBLE VERIFICACIÓN
+    if "finalizado" not in st.session_state:
+        st.session_state.finalizado = False
+
+    if not st.session_state.finalizado:
+        if st.button("🔴 Finalizar sesión", use_container_width=True):
+            st.session_state.esperando_confirmacion = True
+        
+        if st.session_state.get("esperando_confirmacion"):
+            st.warning("¿Está seguro? No podrá enviar más mensajes.")
+            col_si, col_no = st.columns(2)
+            with col_si:
+                if st.button("Sí, cerrar", type="primary"):
+                    st.session_state.finalizado = True
+                    st.session_state.esperando_confirmacion = False
+                    st.rerun()
+            with col_no:
+                if st.button("Cancelar"):
+                    st.session_state.esperando_confirmacion = False
+                    st.rerun()
+    else:
+        st.error("🔒 Sesión Concluida")
 
 
 for i, msg in enumerate(st.session_state.messages):
@@ -155,17 +206,12 @@ for i, msg in enumerate(st.session_state.messages):
                 except Exception as e:
                     pass # Evita que errores de red bloqueen la interfaz
 
-
-with st.sidebar:
-    st.header("Asistente")
-    autor = st.selectbox("¿Quién escribe ahora?", st.session_state.estudiantes)
-    st.divider()
-    if st.button("🔴 Descargar respaldo CSV"):
-        df = pd.DataFrame(st.session_state.log_buffer)
-        csv = df.to_csv(index=False, encoding='utf-8-sig').encode('utf-8-sig')
-        st.download_button("Guardar archivo", data=csv, file_name=f"log_{st.session_state.session_uuid}.csv")
-
-prompt = st.chat_input("Escribe tu duda o explicación...")
+# --- ENTRADA DE MENSAJES (Bloqueada si terminó la sesión) ---
+if not st.session_state.finalizado:
+    prompt = st.chat_input("Escribe tu duda o explicación...")
+else:
+    st.info("La sesión ha finalizado. Los datos han sido resguardados en el servidor. Gracias por participar.")
+    prompt = None
 
 if prompt:
     # 1. Registro visual del mensaje del usuario

@@ -87,27 +87,38 @@ st.sidebar.markdown(f"**ID de Sesión:** `{st.session_state.session_uuid}`")
 for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        
-        # Si el mensaje es de la IA y tiene un ID de base de datos, mostramos los dedos
-        if msg["role"] == "assistant" and "db_id" in msg:
-            # La 'key' única (fb_ID) permite que Streamlit mantenga el estado del dedo
+           if msg["role"] == "assistant" and "db_id" in msg:
             f_key = f"fb_{msg['db_id']}"
             feedback = st.feedback("thumbs", key=f_key)
             
-            # Si el estudiante hace clic o cambia su selección
             if feedback is not None:
-                val = "up" if feedback == 1 else "down"
+                val = "up" if feedback == 1 else "down" 
+                
                 try:
-                    # Actualizamos la fila en Supabase con la última selección
+                    # Actualizamos el pulgar (up/down)
                     supabase.table("interacciones_investigacion").update({"feedback": val}).eq("id", msg["db_id"]).execute()
-                    # --- Mensaje de confirmación ---
-                    if val == "up":
+                    
+                    # SI EL FEEDBACK ES NEGATIVO, MOSTRAR CUADRO DE TEXTO
+                    if val == "down":
+                        # Usamos una key única para el cuadro de texto
+                        t_key = f"txt_{msg['db_id']}"
+                        comentario = st.text_input(
+                            "¿Cómo podemos mejorar esta respuesta?", 
+                            key=t_key,
+                            placeholder="Ej: El cálculo es incorrecto o falta claridad..."
+                        )
+                        
+                        # Si el estudiante escribe algo, lo guardamos
+                        if comentario:
+                            supabase.table("interacciones_investigacion").update({"feedback_text": comentario}).eq("id", msg["db_id"]).execute()
+                            st.toast("Comentario guardado. ¡Gracias!", icon="📝")
+                    
+                    # Mensaje de agradecimiento general
+                    elif val == "up":
                         st.toast("¡Gracias! Feedback positivo registrado.", icon="👍")
-                    else:
-                        st.toast("Feedback negativo registrado. Revisaremos esta respuesta.", icon="👎")
-                    # ---------------------------------------------                    
+                        
                 except Exception as e:
-                    pass # Silencioso para no interrumpir la experiencia del usuario
+                    pass
 
 
 with st.sidebar:

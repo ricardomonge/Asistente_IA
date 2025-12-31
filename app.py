@@ -74,7 +74,7 @@ if not st.session_state.configurado:
             st.markdown("**Recursos y Participantes**")
             # Actualizamos el 'help' para que sea coherente con nuestra lógica de 25MB
             archivos_pdf = st.file_uploader(
-                "Subir materiales (PDF)", 
+                "Subir materiales PDF (Opcional)", 
                 type="pdf", 
                 accept_multiple_files=True, 
                 help="Límite máximo del lote completo: 25 MB."

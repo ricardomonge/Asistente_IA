@@ -150,7 +150,7 @@ if not st.session_state.configurado:
                         st.session_state.configurado = True
                         st.rerun()
                 else:
-                    st.warning("⚠️ Para continuar, debe leer y aceptar el consentimiento ético de tratamiento de datos.")
+                    st.warning("⚠️ Para continuar, debe leer y aceptar el consentimiento informado de tratamiento de datos.")
             else:
                 st.error("❌ Por favor, complete todos los campos obligatorios.")
 

@@ -53,9 +53,9 @@ if not st.session_state.configurado:
     with st.expander("📖 Guía de Registro e Instrucciones", expanded=True):
         st.markdown("""
         1. **Identificación**: Ingrese el NRC y el ID de su grupo de trabajo.
-        2. **Tema**: Defina el concepto a tratar (ej: Distribución Normal).
-        3. **Materiales**: Puede subir varios archivos PDF. 
-        4. **Restricción de Peso**: El sistema solo aceptará un total de **25 MB** entre todos los archivos para asegurar la rapidez de la respuesta.
+        2. **Tema**: Defina el concepto a trabajar (Ej.: Distribución Normal).
+        3. **Materiales**: Puede subir varios archivos PDF (Máximo 25 MB en total).
+        4. **Integrantes**: Registre los nombres de su equipo, uno por línea.
         """)
 
     st.divider()
@@ -65,14 +65,13 @@ if not st.session_state.configurado:
         col_left, col_right = st.columns([1, 1], gap="large")
         
         with col_left:
-            st.markdown("**Administración del Curso**")
+            st.markdown("**Datos del curso**")
             nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej: MAT101 / 2345")
             grupo = st.text_input("Identificador del Grupo", placeholder="Ej: Grupo A-1")
-            tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej: Distribución Normal")
+            tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej.: Distribución Normal")
             
         with col_right:
-            st.markdown("**Recursos y Participantes**")
-            # Actualizamos el 'help' para que sea coherente con nuestra lógica de 25MB
+            st.markdown("**Recursos y participantes**")
             archivos_pdf = st.file_uploader(
                 "Subir materiales PDF (Opcional)", 
                 type="pdf", 
@@ -81,76 +80,76 @@ if not st.session_state.configurado:
             )
             integrantes = st.text_area(
                 "Integrantes del grupo (uno por línea)", 
-                placeholder="Juan P.\nMaría G.\nPedro A. ...", 
+                placeholder="Ej.: Juan P.\nMaría G.\nPedro A. ...", 
                 height=110
             )
+
+        # === NUEVO: CONSENTIMIENTO ÉTICO ACADÉMICO ===
+        st.divider()
+        st.markdown("**Consentimiento Ético de Investigación**")
+        acepta_terminos = st.checkbox(
+            "Consiento voluntariamente mi participación en esta sesión y autorizo el tratamiento automatizado de los datos "
+            "derivados de mi interacción con el asistente. La información recolectada será procesada de forma estrictamente "
+            "anónima y confidencial, con el propósito exclusivo de realizar análisis pedagógicos y contribuir a la "
+            "investigación educativa desarrollada en el IMFE."
+        )
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # --- ESTILO CSS PARA EL BOTÓN AZUL TENUE ---
+        # Estilo CSS para el botón azul tenue
         st.markdown("""
             <style>
-            /* Buscamos el botón dentro del formulario */
             div.stButton > button:first-child {
-                background-color: #E1F5FE !important; /* Azul tenue */
-                color: #01579B !important;            /* Texto azul oscuro */
-                border: 1px solid #B3E5FC !important; /* Borde sutil */
-                border-radius: 8px;                   /* Bordes redondeados */
-                transition: all 0.3s ease;            /* Animación suave */
-                font-weight: bold;
+                background-color: #E1F5FE !important; color: #01579B !important;
+                border: 1px solid #B3E5FC !important; border-radius: 8px;
+                transition: all 0.3s ease; font-weight: bold;
             }
-            /* Efecto al pasar el mouse */
             div.stButton > button:first-child:hover {
-                background-color: #B3E5FC !important; /* Se oscurece un poco */
-                border: 1px solid #81D4FA !important;
-                color: #01579B !important;
-                transform: scale(1.01);               /* Crece levemente */
+                background-color: #B3E5FC !important; transform: scale(1.01);
             }
             </style>
         """, unsafe_allow_html=True)
 
-        # Botón de lanzamiento (mantiene la lógica funcional)
         lanzar = st.form_submit_button("🚀 Inicializar Asistente Académico", width='stretch')
         
         if lanzar:
+            # Validación: Se requiere que todos los campos y el consentimiento estén listos
             if nrc and grupo and tema and integrantes:
-                if archivos_pdf:
-                    # Cálculo del tamaño total del lote
-                    total_size_mb = sum([f.size for f in archivos_pdf]) / (1024 * 1024)
-                    
-                    if total_size_mb > 25:
-                        # Error explícito si se pasan de los 25MB que definimos
-                        st.error(f"❌ El total de archivos ({total_size_mb:.2f} MB) supera el límite de 25 MB permitido para esta investigación.")
+                if acepta_terminos:
+                    if archivos_pdf:
+                        total_size_mb = sum([f.size for f in archivos_pdf]) / (1024 * 1024)
+                        if total_size_mb > 25:
+                            st.error(f"❌ El total de archivos ({total_size_mb:.2f} MB) supera el límite de 25 MB.")
+                        else:
+                            with st.spinner("⏳ Procesando materiales pedagógicos..."):
+                                todos_los_docs = []
+                                for archivo in archivos_pdf:
+                                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                                        tmp.write(archivo.getvalue())
+                                        loader = PyPDFLoader(tmp.name)
+                                        todos_los_docs.extend(loader.load_and_split())
+                                    os.remove(tmp.name)
+                                
+                                embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
+                                st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
+                                st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
+                                
+                                st.session_state.nrc = nrc
+                                st.session_state.grupo = grupo
+                                st.session_state.tema = tema
+                                st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
+                                st.session_state.configurado = True
+                                st.rerun()
                     else:
-                        with st.spinner("⏳ Procesando materiales pedagógicos..."):
-                            todos_los_docs = []
-                            for archivo in archivos_pdf:
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                                    tmp.write(archivo.getvalue())
-                                    loader = PyPDFLoader(tmp.name)
-                                    todos_los_docs.extend(loader.load_and_split())
-                                os.remove(tmp.name)
-                            
-                            # Generación del vector store unificado
-                            embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
-                            st.session_state.vector_db = FAISS.from_documents(todos_los_docs, embeddings)
-                            st.session_state.nombres_archivos = [a.name for a in archivos_pdf]
-                            
-                            # Guardar metadatos y cambiar estado
-                            st.session_state.nrc = nrc
-                            st.session_state.grupo = grupo
-                            st.session_state.tema = tema
-                            st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
-                            st.session_state.configurado = True
-                            st.rerun()
+                        # Inicialización sin archivos (Conocimiento general)
+                        st.session_state.nrc = nrc
+                        st.session_state.grupo = grupo
+                        st.session_state.tema = tema
+                        st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
+                        st.session_state.configurado = True
+                        st.rerun()
                 else:
-                    # Inicialización sin archivos (Conocimiento general)
-                    st.session_state.nrc = nrc
-                    st.session_state.grupo = grupo
-                    st.session_state.tema = tema
-                    st.session_state.estudiantes = [i.strip() for i in integrantes.split("\n") if i.strip()]
-                    st.session_state.configurado = True
-                    st.rerun()
+                    st.warning("⚠️ Para continuar, debe leer y aceptar el consentimiento ético de tratamiento de datos.")
             else:
                 st.error("❌ Por favor, complete todos los campos obligatorios.")
 

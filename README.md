@@ -1,18 +1,18 @@
-# 🔬 IMFE - Laboratorio de IA colaborativa
+# IMFE - Laboratorio de IA colaborativa
 
 Este repositorio contiene una aplicación de Chatbot Académico diseñada como instrumento de recolección de datos para investigaciones en educación superior. El sistema está optimizado para estudiar la alfabetización en IA, la técnica *Chain of Thought* (CoT) y la carga cognitiva en estudiantes de ciencias de la salud.
 
-## 📝 Descripción del proyecto
+## Descripción del proyecto
 La app permite a los grupos de estudiantes interactuar con un asistente experto en temas específicos (ej. **Distribución Normal**). A diferencia de un chat convencional, este sistema registra cada interacción, mensaje y retroalimentación en una base de datos **Supabase** para su posterior análisis estadístico en **R**.
 
-### 🎯 Preguntas de Investigación Vinculadas
+### Preguntas de Investigación Vinculadas
 * ¿Cómo influye el razonamiento paso a paso en la precisión de la resolución de problemas?
 * Medición de la exigencia mental mediante el cruce de logs con instrumentos externos.
 * Seguimiento de la tasa de intentos de fraude y de la adopción real de la herramienta.
 
 ---
 
-## 🚀 Características principales
+## Características principales
 
 * **Configuración por Sesión:** Ingreso de NRC, ID de Grupo e Integrantes.
 * **Definición de Tema:** El asistente adapta su comportamiento según el tema indicado por los estudiantes.
@@ -23,9 +23,9 @@ La app permite a los grupos de estudiantes interactuar con un asistente experto 
 
 ---
 
-## 🛠️ Requisitos Técnicos
+## Requisitos Técnicos
 
-### 📦 Dependencias (`requirements.txt`)
+### Dependencias (`requirements.txt`)
 ```text
 streamlit>=1.33.0
 pandas
@@ -37,7 +37,7 @@ faiss-cpu
 supabase
 pypdf
 ```
-## 🔐 Configuración de Secrets (Streamlit Cloud)
+## Configuración de Secrets (Streamlit Cloud)
 Es necesario configurar las siguientes variables de entorno:
 ```TOML
 OPENAI_API_KEY = "tu_clave_api"
@@ -45,7 +45,7 @@ SUPABASE_URL = "[https://tu-proyecto.supabase.co](https://tu-proyecto.supabase.c
 SUPABASE_KEY = "tu-clave-anon-public"
 ```
 
-## 🗄️ Estructura de la base de datos (SQL)
+## Estructura de la base de datos (SQL)
 Para habilitar el registro, ejecuta este script en el SQL Editor de tu proyecto de Supabase:
 ```SQL
 create table interacciones_investigacion (
@@ -63,7 +63,7 @@ create table interacciones_investigacion (
 );
 ```
 
-## 📊 Conexión para el análisis en R
+## Conexión para el análisis en R
 Para realizar el análisis de datos, conéctate al Connection Pooler de Supabase utilizando el puerto 6543:
 ```R
 library(DBI)

@@ -52,10 +52,10 @@ if not st.session_state.configurado:
     # Guía clara para el estudiante
     with st.expander("📖 Guía de Registro e Instrucciones", expanded=False):
         st.markdown("""
-        1. **Identificación**: Ingrese el NRC y el ID de su grupo de trabajo.
-        2. **Tema**: Defina el concepto a trabajar (Ej.: Distribución Normal).
-        3. **Materiales**: Puede subir varios archivos PDF (Máximo 25 MB en total).
-        4. **Integrantes**: Registre los nombres de su equipo, uno por línea.
+        1. **Identificación**: Ingrese la sigla de su asignatura, el NRC y el ID de su grupo de trabajo.
+        2. **Tema**: Defina el concepto a trabajar (Ej.: distribución normal).
+        3. **Materiales**: Puede subir uno o varios archivos PDF (Máximo 25 MB en total).
+        4. **Integrantes**: Registre los nombres de los integrantes de su equipo, uno por línea.
         """)
 
     st.divider()

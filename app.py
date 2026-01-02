@@ -50,7 +50,7 @@ if not st.session_state.configurado:
         st.markdown("_Asistente de IA Colaborativa | IMFE_")
 
     # Guía clara para el estudiante
-    with st.expander("📖 Guía de Registro e Instrucciones", expanded=True):
+    with st.expander("📖 Guía de Registro e Instrucciones", expanded=False):
         st.markdown("""
         1. **Identificación**: Ingrese el NRC y el ID de su grupo de trabajo.
         2. **Tema**: Defina el concepto a trabajar (Ej.: Distribución Normal).
@@ -86,10 +86,10 @@ if not st.session_state.configurado:
 
         # === NUEVO: CONSENTIMIENTO ÉTICO ACADÉMICO ===
         st.divider()
-        st.markdown("**Consentimiento Ético de Investigación**")
+        st.markdown("**Consentimiento para participantes en investigación educativa**")
         acepta_terminos = st.checkbox(
             "Consiento voluntariamente mi participación en esta sesión y autorizo el tratamiento automatizado de los datos "
-            "derivados de mi interacción con el asistente. La información recolectada será procesada de forma estrictamente "
+            "derivados de mi interacción con este asistente. La información recolectada será procesada de forma estrictamente "
             "anónima y confidencial, con el propósito exclusivo de realizar análisis pedagógicos y contribuir a la "
             "investigación educativa desarrollada en el IMFE."
         )

@@ -56,6 +56,7 @@ if not st.session_state.configurado:
         2. **Tema**: Defina el concepto a trabajar (Ej.: distribución normal).
         3. **Materiales**: Puede subir uno o varios archivos PDF (Máximo 25 MB en total).
         4. **Integrantes**: Registre los nombres de los integrantes de su equipo, uno por línea.
+        5. **Consentimiento informado**: Recuerde leer y aceptar las condiciones de uso.
         """)
 
     st.divider()

@@ -66,7 +66,7 @@ if not st.session_state.configurado:
         
         with col_left:
             st.markdown("**Datos del curso**")
-            nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej: MAT101 / 2345")
+            nrc = st.text_input("Asignatura / Código NRC", placeholder="Ej.: MAT100 / 2345")
             grupo = st.text_input("Identificador del Grupo", placeholder="Ej: Grupo A-1")
             tema = st.text_input("Tema a trabajar en esta sesión", placeholder="Ej.: Distribución Normal")
             
@@ -84,7 +84,7 @@ if not st.session_state.configurado:
                 height=110
             )
 
-        # === NUEVO: CONSENTIMIENTO ÉTICO ACADÉMICO ===
+        # === CONSENTIMIENTO ÉTICO ACADÉMICO ===
         st.divider()
         st.markdown("**Consentimiento para participantes en investigación educativa**")
         acepta_terminos = st.checkbox(

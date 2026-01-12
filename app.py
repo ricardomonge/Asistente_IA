@@ -55,7 +55,7 @@ if not st.session_state.configurado:
         1. **Identificación**: Ingrese la sigla de su asignatura, el NRC y el ID de su grupo de trabajo.
         2. **Tema**: Defina el concepto a trabajar (Ej.: distribución normal).
         3. **Materiales**: Puede subir uno o varios archivos PDF (Máximo 25 MB en total).
-        4. **Integrantes**: Registre los nombres de los integrantes de su equipo, uno por línea.
+        4. **Integrantes**: Registre los RUT de los integrantes de su equipo, uno por línea, si son un grupo.
         5. **Consentimiento informado**: Recuerde leer y aceptar las condiciones de uso.
         """)
 
@@ -80,7 +80,7 @@ if not st.session_state.configurado:
                 help="Límite máximo del lote completo: 25 MB."
             )
             integrantes = st.text_area(
-                "Integrantes del grupo (uno por línea)", 
+                "RUT del estudiante (si son un grupo, uno RUT por línea)", 
                 placeholder="Ej.: Juan P.\nMaría G.\nPedro A. ...", 
                 height=110
             )

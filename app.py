@@ -81,7 +81,7 @@ if not st.session_state.configurado:
             )
             integrantes = st.text_area(
                 "RUT del estudiante (si son un grupo, uno RUT por línea)", 
-                placeholder="Ej.: Juan P.\nMaría G.\nPedro A. ...", 
+                placeholder="Ej.: 123456789-0\n98765432-1\n14785239-0 ...", 
                 height=110
             )
 
